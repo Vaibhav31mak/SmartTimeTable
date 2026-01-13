@@ -1,6 +1,6 @@
 ﻿namespace WebApplication1.Models
 {
-    public class TeacherSubject
+    public class TeacherSubject : BaseEntity
     {
         public int Id { get; set; }
 

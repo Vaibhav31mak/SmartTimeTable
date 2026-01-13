@@ -1,6 +1,6 @@
 ﻿namespace WebApplication1.Models
 {
-    public class Subject
+    public class Subject : BaseEntity
     {
         public int Id { get; set; }
         public string Name { get; set; } // e.g., Data Structures
@@ -10,5 +10,6 @@
         public Semester Semester { get; set; }
         public int DepartmentId { get; set; }
         public Department Department { get; set; }
+        public bool IsLab { get; set; } = false; // e.g., false
     }
 }

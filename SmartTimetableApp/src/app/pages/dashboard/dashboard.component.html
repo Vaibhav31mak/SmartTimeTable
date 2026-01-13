@@ -1,0 +1,66 @@
+<div class="container-fluid p-0">
+    
+  <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded shadow-sm">
+    <div class="d-flex align-items-center gap-3">
+      <h2 class="mb-0 text-dark">Timetable View</h2>
+      
+      <select class="form-select w-auto fw-bold text-primary border-primary" 
+              [(ngModel)]="selectedBatchId" 
+              (change)="onBatchChange()">
+        <option [ngValue]="0" disabled>Select a Batch</option>
+        <option *ngFor="let b of batches" [value]="b.id">{{ b.name }}</option>
+      </select>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-danger" (click)="downloadPDF()" [disabled]="isLoading || selectedBatchId === 0">
+        <i class="bi bi-file-earmark-pdf"></i> Download PDF
+      </button>
+
+      <button class="btn btn-primary" (click)="generate()" [disabled]="isLoading || selectedBatchId === 0">
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+        {{ isLoading ? 'Processing...' : 'Generate Timetable' }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="message" class="alert alert-info shadow-sm">{{ message }}</div>
+
+  <div class="table-responsive" id="timetable-print">
+    <table class="table table-bordered text-center shadow-sm bg-white">
+      <thead class="table-dark">
+        <tr>
+          <th style="width: 15%">Time / Day</th>
+          <th style="width: 17%">Monday</th>
+          <th style="width: 17%">Tuesday</th>
+          <th style="width: 17%">Wednesday</th>
+          <th style="width: 17%">Thursday</th>
+          <th style="width: 17%">Friday</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of gridData">
+          <td class="align-middle fw-bold bg-light text-muted">{{ row.time }}</td>
+          
+          <td *ngFor="let day of [row.monday, row.tuesday, row.wednesday, row.thursday, row.friday]"
+              class="align-middle position-relative p-0" 
+              [class.table-secondary]="!day">
+            
+            <div *ngIf="day" class="p-2 h-100 w-100 d-flex flex-column justify-content-center">
+              <div class="fw-bold text-primary">{{ day.subject }}</div>
+              <div class="small text-dark fw-semibold">{{ day.teacher }}</div>
+              <div class="mt-1">
+                <span class="badge" 
+                      [class.bg-success]="day.room.includes('Lab')" 
+                      [class.bg-secondary]="!day.room.includes('Lab')">
+                  {{ day.room }}
+                </span>
+              </div>
+            </div>
+
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

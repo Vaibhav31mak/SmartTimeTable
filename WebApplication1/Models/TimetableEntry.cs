@@ -1,6 +1,6 @@
 ﻿namespace WebApplication1.Models
 {
-    public class TimetableEntry
+    public class TimetableEntry : BaseEntity
     {
         public int Id { get; set; }
 
@@ -15,8 +15,6 @@
         public int RoomId { get; set; }
         public Room Room { get; set; }
 
-        // --- CHANGED SECTION ---
-        // Instead of separate TeacherId and SubjectId, we use the Mapping ID
         public int TeacherSubjectId { get; set; }
         public TeacherSubject TeacherSubject { get; set; }
     }

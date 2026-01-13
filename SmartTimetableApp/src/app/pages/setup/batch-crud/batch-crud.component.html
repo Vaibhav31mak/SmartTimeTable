@@ -1,0 +1,58 @@
+<div class="card shadow-sm p-4">
+  <h3>Manage Batches</h3>
+  
+  <div class="card bg-light p-3 mb-4">
+    <div class="row g-3">
+      <div class="col-md-3">
+         <label>Batch Name</label>
+         <input class="form-control" [(ngModel)]="newData.name">
+      </div>
+      <div class="col-md-3">
+         <label>Capacity</label>
+         <input type="number" class="form-control" [(ngModel)]="newData.capacity">
+      </div>
+      <div class="col-md-3">
+         <label>Semester</label>
+         <select class="form-select" [(ngModel)]="newData.semesterId">
+            <option [ngValue]="null">Select Semester</option>
+            <option *ngFor="let s of semesters" [value]="s.id">{{ s.name }}</option>
+         </select>
+      </div>
+      <div class="col-md-3">
+         <label>Department</label>
+         <select class="form-select" [(ngModel)]="newData.departmentId">
+            <option [ngValue]="null">Select Dept</option>
+            <option *ngFor="let d of departments" [value]="d.id">{{ d.name }}</option>
+         </select>
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+        <button class="btn w-100" 
+                [class.btn-primary]="!editingId" 
+                [class.btn-warning]="editingId"
+                (click)="add()">
+          {{ editingId ? 'Update Batch' : 'Create Batch' }}
+        </button>
+        <button *ngIf="editingId" class="btn btn-secondary" (click)="resetForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <table class="table table-bordered">
+    <thead class="table-dark">
+      <tr><th>Name</th><th>Capacity</th><th>Semester</th><th>Department</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let b of batches">
+        <td>{{ b.name }}</td>
+        <td>{{ b.capacity }}</td>
+        <td>{{ getSemesterName(b.semesterId) }}</td>
+        <td>{{ getDeptName(b.departmentId) }}</td>
+        <td>
+           <button class="btn btn-sm btn-primary me-2" (click)="edit(b)">Edit</button>
+           <button class="btn btn-sm btn-danger" (click)="delete(b.id)">Del</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebApplication1.Data;
 using WebApplication1.Models;
+using WebApplication1.Services.AI;
 
 namespace WebApplication1.Services
 {
@@ -15,93 +16,72 @@ namespace WebApplication1.Services
 
         public async Task<bool> GenerateTimetableAsync(int batchId)
         {
-            // 1. CLEAR EXISTING TIMETABLE for this batch (Start fresh)
-            var existingEntries = _context.TimetableEntries.Where(t => t.BatchId == batchId);
-            _context.TimetableEntries.RemoveRange(existingEntries);
+            // 1. Clean old data
+            var oldEntries = _context.TimetableEntries.Where(t => t.BatchId == batchId);
+            _context.TimetableEntries.RemoveRange(oldEntries);
             await _context.SaveChangesAsync();
 
-            // 2. FETCH DATA NEEDED
+            // 2. Fetch Data
             var batch = await _context.Batches.FindAsync(batchId);
+            if (batch == null) return false;
+
             var subjects = await _context.Subjects
-                                         .Where(s => s.SemesterId == batch.SemesterId && s.DepartmentId == batch.DepartmentId)
-                                         .ToListAsync();
-
-            var timeSlots = await _context.TimeSlots
-                                          .Where(t => !t.IsLunchBreak) // Ignore lunch breaks
-                                          .ToListAsync();
-
+                .Where(s => s.SemesterId == batch.SemesterId && s.DepartmentId == batch.DepartmentId)
+                .ToListAsync();
+            var slots = await _context.TimeSlots.Where(t => !t.IsLunchBreak).ToListAsync();
             var rooms = await _context.Rooms.ToListAsync();
 
-            // 3. START SCHEDULING
-            var random = new Random();
-            int daysInWeek = 5; // Mon-Fri
+            var subjectIds = subjects.Select(s => s.Id).ToList();
+            var teacherMappings = await _context.TeacherSubjects
+                .Where(ts => subjectIds.Contains(ts.SubjectId))
+                .ToListAsync();
 
-            foreach (var subject in subjects)
+            // 3. Build Locks
+            var existingSchedule = await _context.TimetableEntries
+                .Where(t => t.BatchId != batchId)
+                .Include(t => t.TeacherSubject)
+                .ToListAsync();
+
+            var lockedTeachers = new HashSet<string>(existingSchedule.Select(t => $"{t.DayOfWeek}-{t.TimeSlotId}-{t.TeacherSubject.TeacherId}"));
+            var lockedRooms = new HashSet<string>(existingSchedule.Select(t => $"{t.DayOfWeek}-{t.TimeSlotId}-{t.RoomId}"));
+
+            // 4. Run AI
+            var ga = new GeneticAlgorithm(
+                subjects,
+                teacherMappings,
+                slots,
+                rooms,
+                lockedTeachers,
+                lockedRooms,
+                batchId,
+                batch.capacity // <--- Added the missing argument here
+            );
+
+            // Run 500 generations
+            DNA bestResult = ga.RunEvolution(5000);
+
+            // 5. SAVE WHATEVER WE FOUND
+            // Note: We removed the "Fitness > 1.0" check so you can debug conflicts visually
+            if (bestResult != null && bestResult.Genes.Any())
             {
-                int lecturesScheduled = 0;
+                Console.WriteLine($"Best Fitness: {bestResult.Fitness}");
 
-                // Loop until we meet the weekly requirement (e.g., 4 lectures of C#)
-                while (lecturesScheduled < subject.WeeklyLectures)
+                foreach (var gene in bestResult.Genes)
                 {
-                    bool scheduled = false;
-                    int attempts = 0;
-
-                    // Try to find a slot (Max 20 attempts to prevent infinite loops)
-                    while (!scheduled && attempts < 20)
+                    _context.TimetableEntries.Add(new TimetableEntry
                     {
-                        attempts++;
-
-                        // A. Pick Random Day & Slot
-                        int day = random.Next(1, daysInWeek + 1);
-                        var slot = timeSlots[random.Next(timeSlots.Count)];
-
-                        // B. Find a Teacher for this Subject
-                        var teacherSubject = await _context.TeacherSubjects
-                                            .Include(ts => ts.Teacher)
-                                            .FirstOrDefaultAsync(ts => ts.SubjectId == subject.Id);
-
-                        if (teacherSubject == null) break; // No teacher assigned? Skip.
-
-                        // C. Pick a Room (Just pick first available or random)
-                        var room = rooms[random.Next(rooms.Count)];
-
-                        // D. CHECK CONSTRAINTS (The "Smart" Part)
-
-                        // 1. Is this Batch already busy at this time?
-                        bool batchBusy = await _context.TimetableEntries.AnyAsync(t =>
-                            t.DayOfWeek == day && t.TimeSlotId == slot.Id && t.BatchId == batchId);
-
-                        // 2. Is the Teacher busy elsewhere?
-                        bool teacherBusy = await _context.TimetableEntries.AnyAsync(t =>
-                            t.DayOfWeek == day && t.TimeSlotId == slot.Id && t.TeacherSubject.TeacherId == teacherSubject.TeacherId);
-
-                        // 3. Is the Room occupied?
-                        bool roomBusy = await _context.TimetableEntries.AnyAsync(t =>
-                            t.DayOfWeek == day && t.TimeSlotId == slot.Id && t.RoomId == room.Id);
-
-                        // E. IF SAFE -> BOOK IT
-                        if (!batchBusy && !teacherBusy && !roomBusy)
-                        {
-                            var entry = new TimetableEntry
-                            {
-                                BatchId = batchId,
-                                DayOfWeek = day,
-                                TimeSlotId = slot.Id,
-                                TeacherSubjectId = teacherSubject.Id,
-                                RoomId = room.Id
-                            };
-
-                            _context.TimetableEntries.Add(entry);
-                            await _context.SaveChangesAsync(); // Save immediately to block this slot for next checks
-
-                            lecturesScheduled++;
-                            scheduled = true;
-                        }
-                    }
+                        BatchId = batchId,
+                        DayOfWeek = gene.Day,
+                        TimeSlotId = gene.SlotId,
+                        TeacherSubjectId = gene.TeacherSubjectId,
+                        RoomId = gene.RoomId
+                    });
                 }
+                await _context.SaveChangesAsync();
+                return true; // Success!
             }
 
-            return true;
+            return false; // Only fails if NO DNA was created at all
         }
     }
 }

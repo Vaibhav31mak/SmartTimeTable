@@ -1,0 +1,67 @@
+<div class="card shadow-sm p-4">
+  <h3>Manage Subjects</h3>
+  <div class="card bg-light p-3 mb-4">
+    <div class="row g-3">
+      <div class="col-md-4"><label>Name</label><input class="form-control" [(ngModel)]="newData.name"></div>
+      <div class="col-md-2"><label>Code</label><input class="form-control" [(ngModel)]="newData.code"></div>
+      <div class="col-md-2"><label>Lectures</label><input type="number" class="form-control" [(ngModel)]="newData.weeklyLectures"></div>
+      <div class="col-md-2 pt-4">
+         <div class="form-check">
+            <input class="form-check-input" type="checkbox" [(ngModel)]="newData.isLab" id="labCheck">
+            <label class="form-check-label" for="labCheck">Is Lab?</label>
+         </div>
+      </div>
+
+      <div class="col-md-6">
+        <label>Department</label>
+        <select class="form-select" [(ngModel)]="newData.departmentId">
+           <option [ngValue]="null">Select</option>
+           <option *ngFor="let d of departments" [value]="d.id">{{ d.name }}</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label>Semester</label>
+        <select class="form-select" [(ngModel)]="newData.semesterId">
+           <option [ngValue]="null">Select</option>
+           <option *ngFor="let s of semesters" [value]="s.id">{{ s.name }}</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="fw-bold">Available Teachers:</label>
+        <div class="card p-2 d-flex flex-row flex-wrap gap-3" style="max-height: 100px; overflow-y: auto;">
+          <div *ngFor="let t of teachers" class="form-check">
+            <input class="form-check-input" type="checkbox" 
+                   [value]="t.id" 
+                   [checked]="isChecked(t.id)"
+                   (change)="onTeacherCheck($event, t.id)">
+            <label class="form-check-label">{{ t.name }}</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+         <button class="btn w-100" [class.btn-primary]="!editingId" [class.btn-warning]="editingId" (click)="add()">
+            {{ editingId ? 'Update' : 'Create' }}
+         </button>
+         <button *ngIf="editingId" class="btn btn-secondary" (click)="resetForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <table class="table table-bordered">
+    <thead class="table-dark"><tr><th>Code</th><th>Name</th><th>Dept</th><th>Sem</th><th>Actions</th></tr></thead>
+    <tbody>
+      <tr *ngFor="let s of subjects">
+        <td>{{ s.code }}</td>
+        <td>{{ s.name }}</td>
+        <td>{{ s.department?.name }}</td>
+        <td>{{ s.semester?.name }}</td>
+        <td>
+           <button class="btn btn-sm btn-primary me-2" (click)="edit(s)">Edit</button>
+           <button class="btn btn-sm btn-danger" (click)="delete(s.id)">Del</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

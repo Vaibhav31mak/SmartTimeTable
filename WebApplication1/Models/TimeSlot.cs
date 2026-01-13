@@ -1,6 +1,6 @@
 ﻿namespace WebApplication1.Models
 {
-    public class TimeSlot
+    public class TimeSlot : BaseEntity
     {
         public int Id { get; set; }
         public TimeSpan StartTime { get; set; } // e.g., "Monday"

@@ -1,0 +1,55 @@
+<div class="container d-flex justify-content-center align-items-center vh-100">
+  <div class="card shadow p-4" style="width: 400px;">
+    
+    <h3 class="text-center mb-4">
+      {{ isLoginMode ? 'Timetable Login' : 'Create Account' }}
+    </h3>
+    
+    <div *ngIf="errorMessage" class="alert alert-danger text-center">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert-success text-center">
+      {{ successMessage }}
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="mb-3">
+        <label class="form-label">Email Address</label>
+        <input 
+          type="email" 
+          class="form-control" 
+          formControlName="email" 
+          placeholder="name@example.com"> 
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input 
+          type="password" 
+          class="form-control" 
+          formControlName="password" 
+          placeholder="At least 6 characters">
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn w-100 mb-3"
+        [class.btn-primary]="isLoginMode"
+        [class.btn-success]="!isLoginMode" 
+        [disabled]="loginForm.invalid">
+        {{ isLoginMode ? 'Login' : 'Register' }}
+      </button>
+
+      <div class="text-center">
+        <span class="text-muted small">
+          {{ isLoginMode ? "Don't have an account?" : "Already have an account?" }}
+        </span>
+        <a class="text-primary fw-bold ms-1" style="cursor: pointer;" (click)="onSwitchMode()">
+          {{ isLoginMode ? 'Sign Up' : 'Login' }}
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>

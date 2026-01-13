@@ -1,0 +1,33 @@
+<div class="card p-4 shadow-sm">
+  <h3>Manage Semesters</h3>
+
+  <div class="input-group mb-4">
+    <input class="form-control" [(ngModel)]="newData.name" placeholder="Name (e.g. Fall 2024)">
+    
+    <button class="btn" 
+            [class.btn-success]="!editingId" 
+            [class.btn-warning]="editingId" 
+            (click)="submit()">
+      {{ editingId ? 'Update' : 'Add' }}
+    </button>
+    
+    <button *ngIf="editingId" class="btn btn-secondary" (click)="resetForm()">
+      Cancel
+    </button>
+  </div>
+
+  <ul class="list-group">
+    <li *ngFor="let item of list" class="list-group-item d-flex justify-content-between align-items-center">
+      {{ item.name }}
+      
+      <div class="btn-group">
+        <button class="btn btn-sm btn-outline-primary" (click)="edit(item)">
+          <i class="bi bi-pencil"></i> Edit
+        </button>
+        <button class="btn btn-sm btn-outline-danger" (click)="delete(item.id)">
+          <i class="bi bi-trash"></i> Delete
+        </button>
+      </div>
+    </li>
+  </ul>
+</div>

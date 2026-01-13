@@ -1,0 +1,48 @@
+<div class="card shadow-sm p-4">
+    <h3>Manage Teachers</h3>
+  
+    <div class="row g-3 mb-4 border p-3 rounded bg-light">
+      <div class="col-md-6">
+        <label>Teacher Name</label>
+        <input class="form-control" [(ngModel)]="newData.name">
+      </div>
+      <div class="col-md-6">
+        <label>Department</label>
+        <select class="form-select" [(ngModel)]="newData.departmentId">
+          <option [ngValue]="null">Select Dept</option>
+          <option *ngFor="let d of departments" [value]="d.id">{{ d.name }}</option>
+        </select>
+      </div>
+  
+      <div class="col-12">
+        <label class="fw-bold mb-2">Qualified Subjects:</label>
+        <div class="card p-2" style="max-height: 150px; overflow-y: auto;">
+          <div *ngIf="subjects.length === 0" class="text-muted small">No subjects found. Add subjects first.</div>
+          
+          <div class="form-check" *ngFor="let s of subjects">
+            <input class="form-check-input" type="checkbox" 
+                   [value]="s.id" 
+                   (change)="onSubjectCheck($event, s.id)">
+            <label class="form-check-label">
+              {{ s.name }} ({{ s.code }})
+            </label>
+          </div>
+        </div>
+      </div>
+  
+      <div class="col-12">
+        <button class="btn btn-primary w-100" (click)="add()">Add Teacher</button>
+      </div>
+    </div>
+  
+    <table class="table">
+      <thead class="table-dark"><tr><th>Name</th><th>Dept</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let t of teachers">
+          <td>{{ t.name }}</td>
+          <td>{{ t.department?.name }}</td> 
+          <td><button class="btn btn-sm btn-danger" (click)="delete(t.id)">Del</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
